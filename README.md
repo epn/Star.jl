@@ -15,7 +15,7 @@ In the second step, we compute a cumsum of the array S of sums, which results in
 Besides, we augment the array C with a dummy value 0 at the front, which results in C = [0, 3, 10, 21].
 In the third step, we compute the cumsum of the local array at each processor pi, using the element C[i] as an initial sum.
 For example, at p2, we compute the cumsum of the local array [3, 4] using C[2] = 3 as the initial sum, which results in [6, 10] as the answer. After the third step, we have computed the cumulative sums [1,3], [6,10], and [15,21] at p1, p2, and p3 respectively. 
-Steps 1 and 3 can be performed in parallel on the processors, and step 2 happens serially.
+Steps 1 and 3 are performed in parallel on the processors, whereas step 2 happens serially.
 
 
 
