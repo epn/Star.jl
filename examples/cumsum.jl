@@ -3,6 +3,7 @@ using DistributedArrays
 
 g(a, z) = begin z[1] += a ; cumsum!(z,z) ; end 
 csum(y) = [0; cumsum(y)]
+# computes cumsum on a distributed array x
 cumsum_star(x) = Star.map(g, csum(Star.reduce(sum, x)), x)
 
 function cumsum_star_test(x)
@@ -14,7 +15,6 @@ function cumsum_star_test(x)
   println("rel norm ", norm(out_-x_)/abs(x_[end]))
 end
 
-# computes cumsum on a distributed array x
 function cumsum_no_star(x) 
   ref = [@spawnat p sum(localpart(x)) for p in workers()] #sum local data
   y = [fetch(r) for r in ref] 
