@@ -16,7 +16,7 @@ After this reduction, we collect the sums 3,7, and 11, from processors p1, p2, a
 2. In the second step, we compute a cumsum of the array S of sums, which results in a new array C = [3, 10, 21].
 Besides, we augment the array C with a dummy value 0 at the front, which results in C = [0, 3, 10, 21].
 
-3. In the third step, we compute the cumsum of the local array at each processor pi, using the element C[i] as an initial sum.
+3. In the third step, we compute the cumsum of the local array at each processor "pi", using the element C[i] as an initial sum.
 For example, at p2, we compute the cumsum of the local array [3, 4] using C[2] = 3 as the initial sum, which results in [6, 10] as the answer. After the third step, we have computed the cumulative sums [1,3], [6,10], and [15,21] at p1, p2, and p3 respectively. 
 
 Steps 1 and 3 are performed in parallel on the processors, whereas step 2 happens serially.
@@ -31,14 +31,13 @@ f(y) = [0; cumsum(y)]
 
 g(a, z) = begin z[1] += a ; cumsum!(z,z) ; end 
 
-Note that the user doesn't have to worry about using "spawns", "fetches", and "syncs", when programming with this abstraction.
+Note that the programmer doesn't have to worry about using "spawns", "fetches", and "syncs", when programming with the Star abstraction.
 
-Other examples in the examples directory include 
+Other examples of the Star abstraction (in the examples directory) include 
 
 1. utvw.jl, which computes x=u'vw on column vectors u, v, w, and x.
 
-2. trid/parallel.jl which solves Ax=b where A is a symmetric, diagonally-dominant, tridiagonal matrix, and b and x are the rhs and solution
-respectively.
+2. trid/parallel.jl which solves Ax=b where A is a symmetric, diagonally-dominant, tridiagonal matrix, and b and x are the rhs and solution respectively.
 
 
 
