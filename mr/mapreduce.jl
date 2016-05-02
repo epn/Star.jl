@@ -6,7 +6,7 @@ using DistributedArrays
 #The elements in each subarray Aj are stored in order.
 
 #a map function for the 1st step
-#value Aij is the ith element in the jth partition 
+#key is a (i,j) pair, and the value Aij is the ith element in the jth partition 
 map(key::Tuple{Int64,Int64}, Aij::Float64) = (key[2], (key[1], Aij)) 
 
 #a combine function to compute the sum of the elements in a partition.
@@ -31,49 +31,56 @@ function exclusive_cumsum(key, value)
     value[i] = (value[i][1], initial_value)
     initial_value = initial_value + temp
   end
-  value
 end
 
-function map_and_combine(f, g, A)
-  #B = [f(i, A[i])[2] for i = 1 : length(A)]
-  #g(myid(), B) #invoke the combine function
-  #invoke the map and combine functions
-  id = myid()
-  result = g(id, [f((i, id), A[i])[2][2] for i = 1 : length(A)]) 
-  @show result
-  result
-end
+#invoke the map function f and combine function g
+map_and_combine(id, f, g, A) = g(id, [f((i, id), A[i])[2][2] for i = 1 : length(A)]) 
 
-#A map function cumsum.
-#cumsum computes the cumsum of the augmented array [d0 data], where
-#d0 is the sum of the elements to the left of data
-function cumsum(d0, data)
-  data[1] += d0
+#a map function for the 2nd step
+#key is a (i,j) pair, and the value Aij is the ith element in the jth partition 
+#initial_value is the sum of elements in partitions 1...j-1
+#map(key::Tuple{Int64,Int64}, Aij, initial_value) = (key[2], (key[1], initial_value + Aij)) 
+
+#a combine function for the 2nd step
+#key is the partition id, data is the array of values 
+#initial_value is the sum of elements in partitions 1...j-1
+function cumsum(key, data, initial_value) 
+#@show data
+  if length(data) > 0
+   data[1] += initial_value
+  end
   cumsum!(data, data)
+#@show data
 end
 
-function test(n)
-  A=dones(n)
-  ref = Array{RemoteRef}(nworkers()) 
-  #mapreduce step 1
-  for i = 1:nworkers()
-    p = workers()[i]
-    ref[i] = @spawnat p map_and_combine(map, sum, localpart(A))
+function map_and_combine(id, f, g, A, R)
+#@show R
+  A[:] = [f((i, id), A[i])[2][2] for i = 1 : length(A)]
+#@show A
+  initial_value = R[id][2]
+#@show initial_value
+  g(id, A, initial_value)
+end
+
+function test(A)
+  A_ = convert(Array{Float64, 1}, A)
+  t = @elapsed begin
+    #mapreduce step 1
+    ref = [@spawnat workers()[i] map_and_combine(i, map, sum, localpart(A)) for i =  1:nworkers()]
+    #In the reduce step, compute the exclusive cumsum 
+    partial_sum = [fetch(ref[i])[2] for i = nworkers():-1:1]
+    exclusive_cumsum(1, partial_sum) 
+    #@show result 
+    #mapreduce step 2
+    @sync begin
+      [@spawnat workers()[i] map_and_combine(i, map, cumsum, localpart(A), partial_sum) for i =  1:nworkers()]
+    end
   end
-  #In the reduce step, compute the exclusive cumsum 
-#=
-  temp = [fetch(ref[i]) for i = nworkers():-1:1]
-  partial_sum = Array{Tuple{Int64, Float64}}(nworkers())
-  for i = nworkers():-1:1
-    @show temp[i]
-    partial_sum[i] = temp[i][2] 
-    @show partial_sum[i]
-  end
-=#
-  partial_sum = [fetch(ref[i])[2] for i = nworkers():-1:1]
-  @show partial_sum
-  result = exclusive_cumsum(1, partial_sum) 
-  @show result 
+  out_ = convert(Array{Float64, 1}, A)
+  t1 = @elapsed cumsum!(A_, A_)
+  println("parallel time ", t, " serial time ", t1)
+  println("rel norm ", norm(out_-A_)/abs(A_[end]))
+  #@show A_
   #=
   #map again
   @sync begin
