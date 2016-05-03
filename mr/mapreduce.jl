@@ -34,32 +34,25 @@ function exclusive_cumsum(key, value)
 end
 
 #invoke the map function f and combine function g
-map_and_combine(id, f, g, A) = g(id, [f((i, id), A[i])[2][2] for i = 1 : length(A)]) 
-
-#a map function for the 2nd step
-#key is a (i,j) pair, and the value Aij is the ith element in the jth partition 
-#initial_value is the sum of elements in partitions 1...j-1
-#map(key::Tuple{Int64,Int64}, Aij, initial_value) = (key[2], (key[1], initial_value + Aij)) 
+#map_and_combine(id, f, g, A) = g(id, [f((i, id), A[i])[2][2] for i = 1 : length(A)]) 
+map_and_combine(id, f, g, A) = sum(id, [map((i, id), A[i])[2][2] for i = 1 : length(A)]) 
 
 #a combine function for the 2nd step
 #key is the partition id, data is the array of values 
 #initial_value is the sum of elements in partitions 1...j-1
 function cumsum(key, data, initial_value) 
-#@show data
   if length(data) > 0
    data[1] += initial_value
   end
   cumsum!(data, data)
-#@show data
 end
 
 function map_and_combine(id, f, g, A, R)
-#@show R
-  A[:] = [f((i, id), A[i])[2][2] for i = 1 : length(A)]
-#@show A
+  #A[:] = [f((i, id), A[i])[2][2] for i = 1 : length(A)]
+  A[:] = [map((i, id), A[i])[2][2] for i = 1 : length(A)]
   initial_value = R[id][2]
-#@show initial_value
-  g(id, A, initial_value)
+  #g(id, A, initial_value)
+  cumsum(id, A, initial_value)
 end
 
 function test(A)
@@ -67,10 +60,9 @@ function test(A)
   t = @elapsed begin
     #mapreduce step 1
     ref = [@spawnat workers()[i] map_and_combine(i, map, sum, localpart(A)) for i =  1:nworkers()]
-    #In the reduce step, compute the exclusive cumsum 
+    #in the reduce step, compute the exclusive cumsum 
     partial_sum = [fetch(ref[i])[2] for i = nworkers():-1:1]
     exclusive_cumsum(1, partial_sum) 
-    #@show result 
     #mapreduce step 2
     @sync begin
       [@spawnat workers()[i] map_and_combine(i, map, cumsum, localpart(A), partial_sum) for i =  1:nworkers()]
@@ -80,17 +72,4 @@ function test(A)
   t1 = @elapsed cumsum!(A_, A_)
   println("parallel time ", t, " serial time ", t1)
   println("rel norm ", norm(out_-A_)/abs(A_[end]))
-  #@show A_
-  #=
-  #map again
-  @sync begin
-    for i = 1:nworkers()
-      p = workers()[i]
-      assert(partial_sum[i][1] == i - 1)
-      @spawnat p cumsum(partial_sum[i][2], localpart(A))
-    end
-  end
-  A_ = convert(Array{Float64, 1}, A)
-  @show A_
-  =#
 end
