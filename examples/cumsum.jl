@@ -1,10 +1,25 @@
 include("../src/star.jl")
 using DistributedArrays
 
-g(a, z) = begin z[1] += a ; cumsum!(z,z) ; end 
-csum(y) = [0; cumsum(y)]
+function exclusive_cumsum(x)
+  sum = 0
+  for i = 1 : length(x)
+    temp = x[i]
+    x[i] = sum
+    sum = sum + temp
+  end
+  x
+end
+
+function cumsum(initial_value, x)
+  if length(x) > 0
+    x[1] = initial_value + x[1]
+  end
+  cumsum!(x, x)
+end
+
 # computes cumsum on a distributed array x
-cumsum_star(x) = Star.map(g, csum(Star.reduce(sum, x)), x)
+cumsum_star(x) = Star.map(cumsum, exclusive_cumsum(Star.reduce(sum, x)), x)
 
 function cumsum_star_test(x)
   x_ = convert(Array{Float64, 1}, x)
@@ -16,10 +31,15 @@ function cumsum_star_test(x)
 end
 
 function cumsum_no_star(x) 
-  ref = [@spawnat p sum(localpart(x)) for p in workers()] #sum local data
+  ref = Array(Any, nworkers())
+  for i = 1 : nworkers()
+    ref[i] = @spawnat workers()[i] sum(localpart(x))
+  end
   y = [fetch(r) for r in ref] 
-  cumsum!(y, y) #cumsum at the root
-  y = [0; y]
-  @sync [@spawnat workers()[i] g(y[i], localpart(x)) for i = 1 : nworkers()]
+  exclusive_cumsum(y)
+  @sync begin 
+    for i = 1 : nworkers()
+      @spawnat workers()[i] cumsum(y[i], localpart(x))
+    end
+  end
 end
-
