@@ -34,7 +34,7 @@ When the number of processors **p=√n**, which gives the fastest runtime for
 MapReduce, its communication grows to **Θ(n)**, which is 
 just the serial time to compute all-prefix-sums.
 
-A cumsum example using star :
+#Example
 
 As an example, consider the serial Julia cumsum function cumsum!(x,x), which computes the cumulative sum of the elements in the array x.
 A parallel version of cumsum function (implemented using the star abstraction in examples/cumsum.jl) can be explained as follows.
