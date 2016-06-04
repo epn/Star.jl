@@ -28,7 +28,8 @@ programs like all-prefix-sums.
 To compare the performance of MapReduce with Star, we simulated MapReduce in Julia to compute the
 all-prefix-sums operation. Empirical results on a modern Intel(R) Xeon(R) CPU E5-2676 v3 @ 2.40GHz machine
 with 40 cores, 32KB L1 cache per core, 256 KB L2 cache per core, and 30MB L3 cache per socket,
-show that the MapReduce version runs 3-4 times slower than its Star counterpart.
+show that the MapReduce simulator runs 3-4 times slower than its Star counterpart.
+(We gave the MapReduce simulator some advantage in that though the actual map reduce model would require sorting the elements to compute all-prefix-sums, the simulator doesn't sort. Otherwise, the simulator's performance would be even slower.)
 Theoretically, given **p** processors to execute all-prefix-sums on
 an array of **n** elements, Star incurs **Θ(n/p + p)** time and 
 **Θ(p)** communication.
