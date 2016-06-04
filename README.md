@@ -20,12 +20,12 @@ shared-memory and distributed-memory computing models alike.
 Empirical results show that Star does not degrade performance or scalability
 at the cost of ease of expression.
 
-We also present two parallel algorithms --- a ``Trip'' algorithm 
-to solve symmetric, diagonally-dominant tridiagonal systems, and a ``Wasp''
+We also present two parallel algorithms --- a Trip algorithm 
+to solve symmetric, diagonally-dominant tridiagonal systems, and a Wasp
 algorithm for watershed cuts on graphs and images.
 Trip and Wasp offer improvements over prior art.
-The Trip algorithm solves a system of $n$ unknowns 
-using $p$ processors in $\Theta(n/p + p)$ time and with $\Theta(p)$ 
+The Trip algorithm solves a system of n unknowns 
+using p processors in \Theta(n/p + p) time and with \Theta(p)
 communication.
 While the comparable ``BABE'' algorithm due to Gustafson and Gupta achieves the 
 same time complexity as Trip, it incurs an asymptotically more $\Theta(p^2)$
