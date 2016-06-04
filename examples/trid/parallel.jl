@@ -4,6 +4,7 @@ include("../../src/star.jl")
 #solves Ax = b in parallel, where A is a symmetric tridiagonal matrix
 #upper triangular solve 
 function usolve(y, z, c, d, l, x)
+  #this code performs 5n flops, 4 reads, and 1 write
   n = size(x, 1)
   #y, z are solutions at the previous and next separators
   x[n] = z
@@ -14,6 +15,8 @@ end
 
 #lower triangular solve 
 function lsolve(a, b, c, d, l, x)
+  #this code performs 12n flops in total
+  #it performs 3 reads, and 3 writes
   n = size(x,1)
   d[1] = a[1]
   x[1] = b[1]
@@ -22,11 +25,12 @@ function lsolve(a, b, c, d, l, x)
   r = f / d[1]
   s = f * r
   y = x[1] * r
+
   @inbounds for i = 2 : n - 1
     l_ = c[i] / d[i - 1]         # 1
     d[i] = a[i] - c[i] * l_      # 2
     x[i] = b[i] - x[i - 1] * l_  # 2
-    f *= -l_                     # 1 excluding negation for fillin
+    f *= -l_                     # 2 including negation for fillin
     l[i] = f                     # store fillin
     r = f / d[i]                 # 1 
     s += f * r                   # 2 
@@ -82,7 +86,6 @@ function trid_star_test(n)
   t1 = @elapsed serial_trid(a, b, c, d, x)
   println("norm(A * x -b)", norm(matrix_vector_product(a, c, c, x) -b))
   println("serial time ", t1, " parallel time ", t)
-  #
 end
 
 #auxiliary functions to partition the darrays among processors.
