@@ -57,7 +57,7 @@ function root(s, y, f, d, x)
 end
 
 
-trid_star(a, b, c, d, l, x) = Star.map(usolve, 
+trid_star(a, b, c, d, l, x) = Star.scan(usolve, 
                     root(Star.reduce(lsolve, a, b, c, d, l, x)...), c, d, l, x)
 
 #test routine

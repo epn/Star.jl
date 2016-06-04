@@ -4,7 +4,7 @@ using DistributedArrays
 scalar_times_vector(a, x, w) = x[:] = a * w
 
 #compute x=u'vw
-utvw_star(u, v, w, x) = Star.map(scalar_times_vector, sum(Star.reduce(dot, u, v)), x, w) 
+utvw_star(u, v, w, x) = Star.scan(scalar_times_vector, sum(Star.reduce(dot, u, v)), x, w) 
 
 function utvw_star_test(u, v, w, x)
   #compute x=u'vw
