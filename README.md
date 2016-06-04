@@ -24,19 +24,19 @@ We also present two parallel algorithms --- a Trip algorithm
 to solve symmetric, diagonally-dominant tridiagonal systems, and a Wasp
 algorithm for watershed cuts on graphs and images.
 Trip and Wasp offer improvements over prior art.
-The Trip algorithm solves a system of n unknowns 
-using p processors in \Theta(n/p + p) time and with \Theta(p)
+The Trip algorithm solves a system of **n** unknowns 
+using **p** processors in **Θ**(n/p + p) time and with **Θ**(p)
 communication.
 While the comparable ``BABE'' algorithm due to Gustafson and Gupta achieves the 
-same time complexity as Trip, it incurs an asymptotically more $\Theta(p^2)$
+same time complexity as Trip, it incurs an asymptotically more **Θ**(p^2)
 communication.
-When the number of processors $p=\sqrt n$, which gives the fastest runtime for
-BABE, its communication grows to $\Theta(n)$, which is just the serial time to 
+When the number of processors **p=sqrt(n)**, which gives the fastest runtime for
+BABE, its communication grows to **Θ**(n), which is just the serial time to 
 solve tridiagonal systems.
-The Wasp algorithm executes watershed cuts on a 2D square image with $n$ pixels
-using $p$ processors in 
-$O(n / p + \sqrt {np}\ \alpha(\sqrt {np}))$ time and with $\Theta(\sqrt {np})$
-communication, where $\alpha$ is the slowly growing inverse Ackermann's
+The Wasp algorithm executes watershed cuts on a 2D square image with **n** pixels
+using **p** processors in 
+**O**(n / p + \sqrt {np}\ \alpha(\sqrt {np})) time and with **Θ**(\sqrt {np})
+communication, where **\alpha** is the slowly growing inverse Ackermann's
 function.
 
 Unlike the MapReduce programming model that operates on unordered sets of data, 
