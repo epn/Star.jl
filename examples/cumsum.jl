@@ -19,7 +19,7 @@ function cumsum(initial_value, x)
 end
 
 # computes cumsum on a distributed array x
-cumsum_star(x) = Star.map(cumsum, exclusive_cumsum(Star.reduce(sum, x)), x)
+cumsum_star(x) = Star.scan(cumsum, exclusive_cumsum(Star.reduce(sum, x)), x)
 
 function cumsum_star_test(x)
   x_ = convert(Array{Float64, 1}, x)

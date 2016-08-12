@@ -5,12 +5,12 @@ module Star
 import DistributedArrays:localpart
 localpart(x) = x
 #=
-map takes as input a function f that should be applied on the processors, 
+scan takes as input a function f that should be applied on the processors, 
 the data 'data' that should be distributed among the processors and passed as 
 an argument to f, 
 and the rest of the arguments 'args' for f.
 =#
-function map(f, data, args...)
+function scan(f, data, args...)
   assert(is_tuple(args))
   @sync begin 
     for i = 1 : nworkers()
