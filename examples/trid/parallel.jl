@@ -125,6 +125,62 @@ function test_serial(n, num_runs = 1)
   println(" min ", minimum(T), " max ", maximum(T), " mean ",  mean(T))
 end
 
+function trid_no_star(n, num_runs = 1) 
+  P = nworkers() # of processors
+  #setup the inputs and outputs
+  Da = DArray(I->100 * rand(map(length,I)), (n,), workers(), P, f1)
+  Db = DArray(I->rand(map(length,I)), (n,), workers(), P, f1)
+  Dc = DArray(I->rand(map(length,I)), (n + 1,), workers(), P, f2)
+  Dd = DArray(I->zeros(map(length,I)), (n,), workers(), P, f1)
+  Dl = DArray(I->zeros(map(length,I)), (n,), workers(), P, f1)
+  Dx = DArray(I->zeros(map(length,I)), (n,), workers(), P, f1)
+
+  ref = Array(Any, P)
+  T = zeros(num_runs)
+  for nruns = 1 : num_runs
+    t = @elapsed begin
+      for i = 1 : P
+        ref[i] = @spawnat workers()[i] lsolve(localpart(Da), localpart(Db), 
+                    localpart(Dc), localpart(Dd), localpart(Dl), localpart(Dx))
+      end
+      s = Array(Float64, P)
+      y = Array(Float64, P)
+      f = Array(Float64, P)
+      d = Array(Float64, P)
+      x = Array(Float64, P)
+      results = [fetch(ref[i]) for i = 1 : P] 
+      for i = 1 : P
+        (s[i], y[i], f[i], d[i], x[i]) = results[i]
+      end
+      X = root(s, y, f, d, x)
+      @sync begin 
+        for i = 1 : P
+          @spawnat workers()[i] usolve(X[i][1], X[i][2], localpart(Dc), 
+                                  localpart(Dd), localpart(Dl), localpart(Dx)) 
+        end
+      end
+    end #@elapsed
+    T[nruns] = t
+  end #for
+  println(" parallel time ", T)
+  println(" min ", minimum(T), " max ", maximum(T), " mean ",  mean(T))
+#=
+  # code to test the results
+  x = convert(Array{Float64,1}, Dx)
+  a = convert(Array{Float64,1}, Da)
+  b = convert(Array{Float64,1}, Db)
+  c = convert(Array{Float64,1}, Dc)
+  d = convert(Array{Float64,1}, Dd)
+  c = sub(c, 2:n)
+  println("norm(A * x -b)", norm(matrix_vector_product(a, c, c, x) -b))
+  println("serial trid - not storing L")
+  x[:] = 0 ;
+  t1 = @elapsed serial_trid(a, b, c, d, x)
+  println("norm(A * x -b)", norm(matrix_vector_product(a, c, c, x) -b))
+  println("serial time ", t1, " parallel time ", t)
+=#
+end
+
 #auxiliary functions to partition the darrays among processors.
 function f1(dims, procs) # auxiliary function to partition all darrays but the
                          # subdiagonal 
