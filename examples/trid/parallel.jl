@@ -88,6 +88,43 @@ function trid_star_test(n)
   println("serial time ", t1, " parallel time ", t)
 end
 
+
+function trid_star_run(n, num_runs = 1)
+  P = nworkers() # of processors
+  #setup the inputs and outputs
+  Da = DArray(I->100 * rand(map(length,I)), (n,), workers(), P, f1)
+  Db = DArray(I->rand(map(length,I)), (n,), workers(), P, f1)
+  Dc = DArray(I->rand(map(length,I)), (n + 1,), workers(), P, f2)
+  Dd = DArray(I->zeros(map(length,I)), (n,), workers(), P, f1)
+  Dl = DArray(I->zeros(map(length,I)), (n,), workers(), P, f1)
+  Dx = DArray(I->zeros(map(length,I)), (n,), workers(), P, f1)
+  T = zeros(num_runs)
+
+  for nruns = 1 : num_runs
+    t = @elapsed trid_star(Da, Db, Dc, Dd, Dl, Dx)
+    T[nruns] = t
+  end
+  println(" parallel time ", T)
+  println(" min ", minimum(T), " max ", maximum(T), " mean ",  mean(T))
+end
+
+function test_serial(n, num_runs = 1)
+  P = nworkers() # of processors
+  #setup the inputs and outputs
+  a = 100 * rand(n)
+  b = rand(n)
+  c = rand(n)
+  d = zeros(n)
+  x = zeros(n)
+  T = zeros(num_runs)
+  for nruns = 1 : num_runs
+    t = @elapsed serial_trid(a, b, c, d, x)
+    T[nruns] = t
+  end
+  println("serial time ", T)
+  println(" min ", minimum(T), " max ", maximum(T), " mean ",  mean(T))
+end
+
 #auxiliary functions to partition the darrays among processors.
 function f1(dims, procs) # auxiliary function to partition all darrays but the
                          # subdiagonal 
@@ -121,6 +158,7 @@ function f2(dims, procs) # auxiliary function to partition the subdiagonal
 end
 
 #overload the DArray constructor to provide user defined partitions.
+#=
 function DArray(init, dims, procs, dist, distfunc::Function)
     np = prod(dist)
     procs = procs[1:np]
@@ -131,4 +169,16 @@ function DArray(init, dims, procs, dist, distfunc::Function)
         chunks[i] = remotecall(procs[i], init, idxs[i])
     end
     return DistributedArrays.construct_darray(dims, chunks, procs, idxs, cuts)
+end
+=#
+
+#function DArray(init, dims, procs, dist)
+function DArray(init, dims, procs, dist, distfunc::Function)
+    np = prod(dist)
+    procs = reshape(procs[1:np], ntuple(i->dist[i], length(dist)))
+    idxs, cuts = distfunc([dims...], procs)
+    #idxs, cuts = chunk_idxs([dims...], dist)
+    identity = DistributedArrays.next_did()
+
+    return DistributedArrays.construct_darray(identity, init, dims, procs, idxs, cuts)
 end

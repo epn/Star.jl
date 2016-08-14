@@ -49,6 +49,7 @@ end
 
 function map_and_combine(id, f, g, A, R)
   #A[:] = [f((i, id), A[i])[2][2] for i = 1 : length(A)]
+  #[A[i] = map((i, id), A[i])[2][2] for i = 1 : length(A)]
   A[:] = [map((i, id), A[i])[2][2] for i = 1 : length(A)]
   initial_value = R[id][2]
   #g(id, A, initial_value)
@@ -56,7 +57,7 @@ function map_and_combine(id, f, g, A, R)
 end
 
 function test(A)
-  A_ = convert(Array{Float64, 1}, A)
+#  A_ = convert(Array{Float64, 1}, A)
   t = @elapsed begin
     #mapreduce step 1
     ref = [@spawnat workers()[i] map_and_combine(i, map, sum, localpart(A)) for i =  1:nworkers()]
@@ -68,8 +69,9 @@ function test(A)
       [@spawnat workers()[i] map_and_combine(i, map, cumsum, localpart(A), partial_sum) for i =  1:nworkers()]
     end
   end
-  out_ = convert(Array{Float64, 1}, A)
-  t1 = @elapsed cumsum!(A_, A_)
-  println("parallel time ", t, " serial time ", t1)
-  println("rel norm ", norm(out_-A_)/abs(A_[end]))
+  println("parallel time ", t) ;
+#  out_ = convert(Array{Float64, 1}, A)
+#  t1 = @elapsed cumsum!(A_, A_)
+#  println("parallel time ", t, " serial time ", t1)
+#  println("rel norm ", norm(out_-A_)/abs(A_[end]))
 end
