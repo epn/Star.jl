@@ -5,14 +5,14 @@ function serial_trid(a, b, c, d, x)
   n = size(a,1)
   d[1] = a[1]
   x[1] = b[1]
-  for i = 2:n
-    l = c[i - 1] / d[i - 1]
+  for i = 2:n   # 3 reads and 2 writes
+    l = c[i - 1] / d[i - 1] 
     d[i] = a[i] - c[i - 1] * l
     x[i] = b[i] - l * x[i - 1]
   end
           
   x[n] = x[n] / d[n]
-  for i = n - 1 : -1 : 1
+  for i = n - 1 : -1 : 1    # 3 reads and 1 write 
     x[i] = (x[i] - c[i] * x[i + 1]) / d[i]
   end
 end
